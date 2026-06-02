@@ -1,88 +1,66 @@
-# session-report — kit compartible
+# Skill-NoOne
 
-Documenta cada **sesion de trabajo** con datos precisos: consumo de tokens,
-modelo usado, skills/comandos, objetos (archivos) creados y modificados, lineas
-de codigo, **commits de git** (con archivos y `+/-` por commit), si compilo y si
-testeo. Mantiene un **CSV maestro** y un **consolidado diario**.
+Skills de productividad para equipos que usan AI coding tools.
+Funciona en **Claude Code · Antigravity · GitHub Copilot · IBM Bob**.
 
-Pensado para usarse en equipo y de forma **local** en:
-**Claude Code · Antigravity · GitHub Copilot · IBM Bob**.
+## Skills disponibles
 
----
+| Skill | Que hace |
+|---|---|
+| [session-report](session-report/) | Documenta cada sesion: tokens, modelo, archivos, LOC, commits, compilo/testeo. CSV maestro + consolidado diario. |
+| [git-flow](git-flow/) | Flujo Gitflow completo y seguro para entorno local. Commits Conventional Commits estricto. Respaldo automatico. |
 
-## Que es exacto y que no (importante)
+## Instalacion rapida
 
-| Metrica | Claude Code | Antigravity / Copilot / IBM Bob |
-|---|---|---|
-| Commits, archivos, LOC (git) | ✅ exacto | ✅ exacto (universal) |
-| Compilo / testeo | ⚠️ heuristico | ⚠️ heuristico |
-| Tokens / modelo / skills | ✅ exacto (transcript JSONL) | ⚙️ manual via `--meta` |
-
-> El consumo exacto de tokens se lee del **transcript JSONL**, un artefacto que
-> **solo genera Claude Code**. Las demas herramientas no exponen ese archivo, asi
-> que su modelo y tokens se aportan con `--meta` (lo rellena el agente o el usuario).
-> Todo lo basado en **git** es exacto en cualquier herramienta.
-
----
-
-## Estructura del kit
-
+```bash
+git clone https://github.com/AIByNoOne/Skill-NoOne.git
+cd Skill-NoOne
+./install.sh --all --project /ruta/a/tu/repo
 ```
-session-report-kit/
-├── README.md                 ← este archivo
-├── AGENTS.md                 ← estandar abierto (Copilot/Antigravity/Bob)
-├── install.sh                ← instalador local
-├── VERSION
-├── bin/report.py             ← motor unico (toda la logica)
-├── claude-code/SKILL.md      ← skill de Claude Code
-├── github-copilot/session-report.prompt.md
-├── antigravity/session-report.md
-└── ibm-bob/session-report.md
-```
-
-## Instalacion
 
 Requisitos: `python3` y `git`. Sin dependencias externas.
 
+Opciones del instalador:
 ```bash
-# CLI global + skill de Claude Code:
-./install.sh
-
-# + hook automatico de Claude Code (genera el reporte al cerrar sesion):
-./install.sh --claude-hook
-
-# + wrappers de Copilot/Antigravity/Bob dentro de un repo concreto:
-./install.sh --all --project /ruta/a/mi/repo
+./install.sh                        # CLI globales + skills de Claude Code
+./install.sh --claude-hook          # + hook SessionEnd automatico
+./install.sh --all --project DIR    # + wrappers de Copilot/Antigravity/Bob en tu repo
 ```
 
-El instalador crea el comando `session-report` en `~/.local/bin`. Asegurate de
-tener esa carpeta en el `PATH`.
+Los comandos se instalan en `~/.local/bin/`:
+- `session-report` — reporte de sesion
+- `flow`           — flujo git
 
-## Uso
+## Uso rapido
 
 ```bash
-# Claude Code (auto: lee tokens y modelo del transcript)
-session-report
+# Session report
+session-report          # Claude Code (tokens automaticos)
+session-report --daily  # Consolidado del dia
 
-# Otras herramientas (git + modelo/tokens manuales)
-session-report --source git --tool github-copilot \
-  --meta '{"model":"gpt-5","input_tokens":0,"output_tokens":0}'
-
-# Consolidado del dia
-session-report --daily            # hoy
-session-report --daily 2026-06-01 # una fecha
+# Git flow
+flow init               # Inicializa Gitflow en el repo actual
+flow status             # Estado actual
+flow feature start login
+flow commit -m "feat(auth): agrega login con email"
+flow feature finish
 ```
 
-Salida en `analisis/sesiones/` del repo de trabajo:
-`report-<id>.md`, `sessions-log.csv`, `diario/<fecha>.md`.
+## Estructura del repositorio
 
-## Compartir con el equipo
-
-Este kit es una carpeta autocontenida. Opciones:
-- **Repo git:** publicalo y que cada quien clone y corra `./install.sh`.
-- **Archivo:** comparte el `.tar.gz` generado; descomprimir y `./install.sh`.
-
-## Extender la deteccion de build/test
-
-Si tu equipo usa comandos de compilacion o test poco comunes, anade el patron en
-`bin/report.py` (`COMPILE_RE` / `TEST_RE`).
+```
+Skill-NoOne/
+├── README.md
+├── AGENTS.md            ← leido por Copilot / Antigravity / IBM Bob
+├── install.sh
+├── session-report/
+│   ├── bin/report.py
+│   ├── claude-code/SKILL.md
+│   ├── github-copilot/ · antigravity/ · ibm-bob/
+│   └── VERSION
+└── git-flow/
+    ├── bin/flow.py
+    ├── claude-code/SKILL.md
+    ├── github-copilot/ · antigravity/ · ibm-bob/
+    └── VERSION
+```
