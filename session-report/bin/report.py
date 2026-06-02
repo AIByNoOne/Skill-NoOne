@@ -90,7 +90,18 @@ def empty_session(session_id=None, cwd=None, tool="unknown"):
         "files_created": {}, "files_modified": {},
         "loc_written": 0, "loc_edited_net": 0,
         "compiles": [], "tests": [], "bash_count": 0,
+        "user_messages": [],   # textos reales de los mensajes del usuario
     }
+
+STRIP_TAGS_RE = re.compile(r"<[^>]+>.*?</[^>]+>|<[^>]+/>", re.DOTALL)
+
+def clean_user_text(text):
+    """Elimina tags XML/sistema y retorna texto limpio."""
+    text = STRIP_TAGS_RE.sub("", text)
+    # quitar lineas que son solo ruido de hooks/system
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    lines = [l for l in lines if not l.startswith(("<", "[", "---"))]
+    return " ".join(lines).strip()
 
 def model_bucket(d, model):
     return d["models"].setdefault(
@@ -144,6 +155,9 @@ def analyze_claude(rows, tool="claude-code"):
                 text_blob = content
             if not is_tool_result:
                 d["user_turns"] += 1
+                clean = clean_user_text(text_blob)
+                if clean and len(clean) > 8:
+                    d["user_messages"].append(clean)
             for m in re.findall(r"<command-name>/?([\w:-]+)</command-name>", text_blob):
                 d["skills"][m] = d["skills"].get(m, 0) + 1
 
@@ -361,7 +375,26 @@ def render_md(d, gitinfo):
                      f"(+{c['ins']}/-{c['del']}, {len(c['files'])} archivos)")
             for fname, ai, bi in c["files"]:
                 L.append(f"    - {fname} (+{ai}/-{bi})")
+    L.append("")
+
+    # Solicitudes del usuario — input para el resumen generado por Claude
+    L += ["## Solicitudes del usuario", ""]
+    msgs = d.get("user_messages") or []
+    if msgs:
+        for i, m in enumerate(msgs, 1):
+            # truncar mensajes muy largos para no inflar el reporte
+            snippet = m[:300] + ("…" if len(m) > 300 else "")
+            L.append(f"{i}. {snippet}")
+    else:
+        L.append("- _no se pudieron extraer mensajes del usuario_")
     L += ["", "---",
+          "<!-- RESUMEN_PENDIENTE -->",
+          "<!-- Claude: reemplaza este marcador con las secciones",
+          "     '## Resumen de trabajo' y '## Tareas realizadas'",
+          "     basandote en las solicitudes del usuario, archivos creados",
+          "     y commits listados arriba. -->",
+          "",
+          "---",
           "_Git, archivos y LOC son exactos en cualquier herramienta. Tokens/modelo son "
           "exactos en Claude Code (transcript) y manuales (`--meta`) en las demas. "
           "Compilo/testeo es heuristico._"]
