@@ -9,6 +9,7 @@ Funciona en **Claude Code · Antigravity · GitHub Copilot · IBM Bob**.
 |---|---|
 | [session-report](session-report/) | Documenta cada sesion: tokens, modelo, archivos, LOC, commits, compilo/testeo. CSV maestro + consolidado diario. |
 | [git-flow](git-flow/) | Flujo Gitflow completo y seguro para entorno local. Commits Conventional Commits estricto. Respaldo automatico. |
+| [memory-agent-by-no-one](memory-agent-by-no-one/) | Memoria persistente entre sesiones. Guarda decisiones, bugfixes y contexto en SQLite local. Motor: engram. Sin servicios externos. |
 
 ## Instalacion rapida
 
@@ -19,6 +20,10 @@ cd Skill-NoOne
 ```
 
 Requisitos: `python3` y `git`. Sin dependencias externas.
+`memory-agent-by-no-one` requiere ademas el binario `engram`:
+```bash
+brew install gentleman-programming/tap/engram
+```
 
 Opciones del instalador:
 ```bash
@@ -30,6 +35,7 @@ Opciones del instalador:
 Los comandos se instalan en `~/.local/bin/`:
 - `session-report` — reporte de sesion
 - `flow`           — flujo git
+- `memory-agent`   — helper de verificacion/backup (requiere engram instalado)
 
 ## Uso rapido
 
@@ -51,15 +57,20 @@ flow feature finish
 ```
 Skill-NoOne/
 ├── README.md
-├── AGENTS.md            ← leido por Copilot / Antigravity / IBM Bob
+├── AGENTS.md                     ← leido por Copilot / Antigravity / IBM Bob
 ├── install.sh
 ├── session-report/
 │   ├── bin/report.py
 │   ├── claude-code/SKILL.md
 │   ├── github-copilot/ · antigravity/ · ibm-bob/
 │   └── VERSION
-└── git-flow/
-    ├── bin/flow.py
+├── git-flow/
+│   ├── bin/flow.py
+│   ├── claude-code/SKILL.md
+│   ├── github-copilot/ · antigravity/ · ibm-bob/
+│   └── VERSION
+└── memory-agent-by-no-one/
+    ├── bin/setup.py              ← helper de verificacion/backup
     ├── claude-code/SKILL.md
     ├── github-copilot/ · antigravity/ · ibm-bob/
     └── VERSION

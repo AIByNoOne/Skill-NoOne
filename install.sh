@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instalador de Skill-NoOne (session-report + git-flow).
+# Instalador de Skill-NoOne (session-report + git-flow + memory-agent-by-no-one).
 # Uso:
 #   ./install.sh                        CLI + skills de Claude Code
 #   ./install.sh --project DIR          + wrappers Copilot/Antigravity/Bob en el repo
@@ -76,17 +76,42 @@ chmod +x "$BIN_DST/flow"
 echo "[ok] git-flow CLI -> $BIN_DST/flow"
 echo "[ok] git-flow Claude skill -> $GF_SKILL"
 
-# ── 3) Wrappers por proyecto ────────────────────────────────────────────────
+# ── 3) memory-agent-by-no-one ──────────────────────────────────────────────
+MA_SKILL="${CLAUDE_SKILLS}/memory-agent-by-no-one"
+mkdir -p "$MA_SKILL"
+cp "$KIT/memory-agent-by-no-one/bin/setup.py" "$MA_SKILL/setup.py"
+cp "$KIT/memory-agent-by-no-one/claude-code/SKILL.md" "$MA_SKILL/SKILL.md"
+
+cat > "$BIN_DST/memory-agent" <<EOF
+#!/usr/bin/env bash
+exec python3 "$KIT/memory-agent-by-no-one/bin/setup.py" "\$@"
+EOF
+chmod +x "$BIN_DST/memory-agent"
+echo "[ok] memory-agent CLI -> $BIN_DST/memory-agent"
+echo "[ok] memory-agent Claude skill -> $MA_SKILL"
+
+if ! command -v engram &>/dev/null; then
+  echo "[warn] engram no esta instalado. La skill memory-agent requiere:"
+  echo "       brew install gentleman-programming/tap/engram"
+  echo "       o visita: https://github.com/Gentleman-Programming/engram/blob/main/docs/INSTALLATION.md"
+fi
+
+# ── 4) Wrappers por proyecto ────────────────────────────────────────────────
 if [ -n "$PROJECT" ]; then
   PROJECT="$(cd "$PROJECT" && pwd)"
   echo "== Proyecto: $PROJECT =="
   cp "$KIT/AGENTS.md" "$PROJECT/AGENTS.md"
+
   mkdir -p "$PROJECT/.github/prompts"
-  cp "$KIT/session-report/github-copilot/session-report.prompt.md" "$PROJECT/.github/prompts/"
-  cp "$KIT/git-flow/github-copilot/git-flow.prompt.md"             "$PROJECT/.github/prompts/"
+  cp "$KIT/session-report/github-copilot/session-report.prompt.md"        "$PROJECT/.github/prompts/"
+  cp "$KIT/git-flow/github-copilot/git-flow.prompt.md"                    "$PROJECT/.github/prompts/"
+  cp "$KIT/memory-agent-by-no-one/github-copilot/memory-agent.prompt.md"  "$PROJECT/.github/prompts/"
+
   mkdir -p "$PROJECT/.antigravity"
-  cp "$KIT/session-report/antigravity/session-report.md" "$PROJECT/.antigravity/"
-  cp "$KIT/git-flow/antigravity/git-flow.md"             "$PROJECT/.antigravity/"
+  cp "$KIT/session-report/antigravity/session-report.md"   "$PROJECT/.antigravity/"
+  cp "$KIT/git-flow/antigravity/git-flow.md"               "$PROJECT/.antigravity/"
+  cp "$KIT/memory-agent-by-no-one/antigravity/memory-agent.md" "$PROJECT/.antigravity/"
+
   echo "[ok] AGENTS.md y wrappers instalados en $PROJECT"
   echo "[i ] IBM Bob: usa el AGENTS.md de la raiz del proyecto."
 fi
@@ -97,4 +122,4 @@ case ":$PATH:" in
 esac
 
 echo ""
-echo "== Listo. Prueba: flow status  |  session-report --daily =="
+echo "== Listo. Prueba: flow status  |  session-report --daily  |  memory-agent --check =="

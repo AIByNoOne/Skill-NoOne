@@ -1,7 +1,7 @@
 # AGENTS.md — Skill-NoOne
 
 > Estandar abierto leido por GitHub Copilot, Antigravity, IBM Bob y otros agentes.
-> Define las skills **session-report** y **git-flow**.
+> Define las skills **session-report**, **git-flow** y **memory-agent-by-no-one**.
 
 ---
 
@@ -88,3 +88,57 @@ Formato: `tipo(scope): asunto en minusculas`
 Tipos validos: feat, fix, chore, docs, refactor, test, perf, build, ci, style, revert
 Ejemplo: `feat(auth): agrega validacion de email`
 `flow commit` rechaza mensajes que no cumplan este formato.
+
+---
+
+## skill: memory-agent-by-no-one
+
+Memoria persistente entre sesiones. Guarda decisiones, bugfixes, patrones y
+contexto en SQLite local. Motor interno: engram (Gentleman-Programming).
+Sin servicios externos, sin API keys, sin costo por uso.
+
+### Prerequisito
+```bash
+brew install gentleman-programming/tap/engram
+```
+Configurar el MCP en tu agente con: `{"command": "engram", "args": ["mcp"]}`
+
+### Cuando usarlo
+"recuerda que", "guarda esto", "acordate de", "que hicimos con",
+"como resolvimos", "busca en la memoria", "remember that", "recall"
+
+### Al iniciar sesion
+Llamar `mem_current_project` y `mem_context` antes de responder al usuario
+si se menciona un proyecto o problema previo.
+
+### Guardar memoria
+Llamar `mem_save` inmediatamente despues de decision, bugfix, patron o
+descubrimiento. Formato:
+```
+title: verbo + que (corto y buscable)
+type: bugfix | decision | architecture | discovery | pattern | config | preference
+content:
+  **What**: que se hizo
+  **Why**: que lo motivo
+  **Where**: archivos afectados
+  **Learned**: gotchas (omitir si no hay)
+```
+
+### Buscar memoria
+1. `mem_context` — sesiones recientes (rapido)
+2. `mem_search(query)` — FTS5 full-text si no encontro
+3. `mem_get_observation(id)` — contenido completo
+
+### Cerrar sesion (obligatorio)
+Llamar `mem_session_summary` antes de "listo" o "terminamos":
+Goal / Instructions / Discoveries / Accomplished / Next Steps / Relevant Files
+
+### Pasos para el agente
+1. Al iniciar: detectar proyecto con `mem_current_project`, recuperar contexto con `mem_context`.
+2. Despues de cada trabajo significativo: guardar con `mem_save`.
+3. Si `mem_save` devuelve `judgment_required: true`: resolver conflicto con `mem_judge`.
+4. Al cerrar: llamar `mem_session_summary` siempre.
+
+### Nota sobre compatibilidad
+- Claude Code, Antigravity, Codex, Gemini CLI, VS Code: soporte oficial de engram.
+- IBM Bob: funciona si soporta MCP stdio estandar (no verificado oficialmente).
