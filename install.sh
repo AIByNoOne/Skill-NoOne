@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instalador de Skill-NoOne (session-report + git-flow + memory-agent-by-no-one).
+# Instalador de Skill-NoOne (session-report + git-flow + memory-agent-by-no-one + as400-quality).
 # Uso:
 #   ./install.sh                        CLI + skills de Claude Code
 #   ./install.sh --project DIR          + wrappers Copilot/Antigravity/Bob en el repo
@@ -96,7 +96,21 @@ if ! command -v engram &>/dev/null; then
   echo "       o visita: https://github.com/Gentleman-Programming/engram/blob/main/docs/INSTALLATION.md"
 fi
 
-# ── 4) Wrappers por proyecto ────────────────────────────────────────────────
+# ── 4) as400-quality ────────────────────────────────────────────────────────
+AQ_SKILL="${CLAUDE_SKILLS}/as400-quality"
+mkdir -p "$AQ_SKILL"
+cp "$KIT/as400-quality/bin/analyze.py" "$AQ_SKILL/analyze.py"
+cp "$KIT/as400-quality/claude-code/SKILL.md" "$AQ_SKILL/SKILL.md"
+
+cat > "$BIN_DST/as400-quality" <<EOF
+#!/usr/bin/env bash
+exec python3 "$KIT/as400-quality/bin/analyze.py" "\$@"
+EOF
+chmod +x "$BIN_DST/as400-quality"
+echo "[ok] as400-quality CLI -> $BIN_DST/as400-quality"
+echo "[ok] as400-quality Claude skill -> $AQ_SKILL"
+
+# ── 5) Wrappers por proyecto ────────────────────────────────────────────────
 if [ -n "$PROJECT" ]; then
   PROJECT="$(cd "$PROJECT" && pwd)"
   echo "== Proyecto: $PROJECT =="
@@ -106,11 +120,13 @@ if [ -n "$PROJECT" ]; then
   cp "$KIT/session-report/github-copilot/session-report.prompt.md"        "$PROJECT/.github/prompts/"
   cp "$KIT/git-flow/github-copilot/git-flow.prompt.md"                    "$PROJECT/.github/prompts/"
   cp "$KIT/memory-agent-by-no-one/github-copilot/memory-agent.prompt.md"  "$PROJECT/.github/prompts/"
+  cp "$KIT/as400-quality/github-copilot/as400-quality.prompt.md"          "$PROJECT/.github/prompts/"
 
   mkdir -p "$PROJECT/.antigravity"
   cp "$KIT/session-report/antigravity/session-report.md"   "$PROJECT/.antigravity/"
   cp "$KIT/git-flow/antigravity/git-flow.md"               "$PROJECT/.antigravity/"
   cp "$KIT/memory-agent-by-no-one/antigravity/memory-agent.md" "$PROJECT/.antigravity/"
+  cp "$KIT/as400-quality/antigravity/as400-quality.md"     "$PROJECT/.antigravity/"
 
   echo "[ok] AGENTS.md y wrappers instalados en $PROJECT"
   echo "[i ] IBM Bob: usa el AGENTS.md de la raiz del proyecto."
@@ -122,4 +138,4 @@ case ":$PATH:" in
 esac
 
 echo ""
-echo "== Listo. Prueba: flow status  |  session-report --daily  |  memory-agent --check =="
+echo "== Listo. Prueba: flow status  |  session-report --daily  |  memory-agent --check  |  as400-quality src =="

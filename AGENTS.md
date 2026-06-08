@@ -1,7 +1,7 @@
 # AGENTS.md — Skill-NoOne
 
 > Estandar abierto leido por GitHub Copilot, Antigravity, IBM Bob y otros agentes.
-> Define las skills **session-report**, **git-flow** y **memory-agent-by-no-one**.
+> Define las skills **session-report**, **git-flow**, **memory-agent-by-no-one** y **as400-quality**.
 
 ---
 
@@ -142,3 +142,44 @@ Goal / Instructions / Discoveries / Accomplished / Next Steps / Relevant Files
 ### Nota sobre compatibilidad
 - Claude Code, Antigravity, Codex, Gemini CLI, VS Code: soporte oficial de engram.
 - IBM Bob: funciona si soporta MCP stdio estandar (no verificado oficialmente).
+
+---
+
+## skill: as400-quality
+
+Analiza la calidad del codigo AS/400 (IBM i) estilo SonarQube, 100% local y sin
+servicios externos. Cubre RPG IV (fixed/mixed/fully-free), SQLRPGLE, CL, DDS y SQL.
+
+### Cuando usarlo
+"revisa la calidad del codigo", "code review AS/400", "busca bugs o vulnerabilidades",
+"metricas de complejidad", "quality gate", "deuda tecnica", "como SonarQube", "linter RPG"
+
+### Dos capas (ambas obligatorias)
+1. **Estatica** — el CLI `as400-quality` (motor `analyze.py`): clasifica formato, calcula
+   metricas (LOC, densidad de comentarios, complejidad ciclomatica) y aplica reglas por
+   patron. Exit code 1 si el quality gate da FAIL → integrable en CI/CD.
+2. **Semantica** — el agente lee el codigo y razona lo que el regex no ve: bugs de logica,
+   SQL injection real, duplicacion, cross-reference RPG<->DDS.
+
+### Comando
+```bash
+as400-quality src --json quality-reports/scan.json
+# si no esta en PATH:
+python3 <ruta-al-kit>/as400-quality/bin/analyze.py src --json -
+```
+
+### Pasos para el agente
+1. Definir alcance (default `src/`) y correr `as400-quality` (capa estatica).
+2. **Antes de revisar logica RPG**, cruzar cada `dcl-f` con su DDS: un nombre en mayusculas
+   no declarado es valido si es campo externo del record format (no marcar como bug sin verificar).
+3. Revisar semanticamente: `%EOF` tras READ, `%FOUND` tras CHAIN, variables sin inicializar,
+   division por cero, `SQLCOD` tras EXEC SQL, SQL dinamico con parameter markers (`?`),
+   credenciales hardcodeadas, duplicacion, complejidad.
+4. Reglas de contexto (no falsos positivos): I/O nativo en PUB400 es deliberado; `GOTO` de
+   error en CL es idiomatico; mega-archivos de prueba van fuera del gate del codigo real.
+5. Entregar reporte consolidado: quality gate, conteo Bug/Vulnerability/Smell, metricas por
+   archivo y fixes accionables (archivo:linea). Correr solo el script es resultado parcial.
+
+### Severidades y gate
+BLOCKER > CRITICAL > MAJOR > MINOR > INFO. Gate: PASS (0 issues) · WARN (sin BLOCKER/CRITICAL)
+· FAIL (≥1 BLOCKER/CRITICAL, exit 1).
